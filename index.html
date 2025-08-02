@@ -335,6 +335,44 @@
       text-align: center;
     }
     
+    .email-error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
+    
+    .form-error {
+      color: #dc3545;
+      font-size: 0.875rem;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: var(--accent);
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
     @media (max-width: 768px) {
       .hero h1 {
         font-size: 2.2rem;
@@ -479,7 +517,7 @@
   <section id="contact" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;text-align:center">
     <div class="container">
       <h2>Ready to Engineer Reliability?</h2>
-      <p>We don’t just advise — we implement. Speak the language of maintenance teams, deliver boardroom results.</p>
+      <p>We don't just advise — we implement. Speak the language of maintenance teams, deliver boardroom results.</p>
       
       <div class="contact-info">
         <div class="contact-item">
@@ -505,18 +543,20 @@
       
       <div class="contact-form">
         <h3 style="color: var(--primary); margin-bottom: 20px;">Send Us a Message</h3>
-        <form id="contactForm">
+        <form id="contactForm" method="POST">
           <div class="form-group">
             <label for="name">Your Name</label>
-            <input type="text" id="name" required>
+            <input type="text" id="name" name="name" required>
+            <div class="form-error" id="name-error">Please enter your name</div>
           </div>
           <div class="form-group">
             <label for="email">Email Address</label>
-            <input type="email" id="email" required>
+            <input type="email" id="email" name="email" required>
+            <div class="form-error" id="email-error">Please enter a valid email address</div>
           </div>
           <div class="form-group">
             <label for="industry">Industry</label>
-            <select id="industry">
+            <select id="industry" name="industry">
               <option value="">Select Industry</option>
               <option value="petrochemical">Petrochemical</option>
               <option value="mining">Mining</option>
@@ -528,7 +568,12 @@
           </div>
           <div class="form-group">
             <label for="message">Message</label>
-            <textarea id="message" required></textarea>
+            <textarea id="message" name="message" required></textarea>
+            <div class="form-error" id="message-error">Please enter your message</div>
+          </div>
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Sending your message...</p>
           </div>
           <button type="submit" class="btn" style="width: 100%;">
             <i class="fas fa-paper-plane"></i>
@@ -538,6 +583,10 @@
         <div class="email-confirmation" id="confirmationMessage">
           <i class="fas fa-check-circle"></i>
           Your message has been sent to ramesa.suppliers@outlook.com
+        </div>
+        <div class="email-error" id="errorMessage">
+          <i class="fas fa-exclamation-circle"></i>
+          <span id="errorText">There was a problem sending your message. Please try again.</span>
         </div>
       </div>
     </div>
@@ -561,19 +610,80 @@
   </footer>
 
   <script>
-    // Form submission handling
+    // Form validation and submission
     document.getElementById('contactForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Show confirmation message
-      document.getElementById('confirmationMessage').style.display = 'block';
+      // Reset previous errors
+      document.querySelectorAll('.form-error').forEach(el => el.style.display = 'none');
+      document.getElementById('errorMessage').style.display = 'none';
       
-      // Reset form after submission
-      setTimeout(function() {
-        document.getElementById('contactForm').reset();
-        document.getElementById('confirmationMessage').style.display = 'none';
-      }, 5000);
+      // Validate form
+      let isValid = true;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+      
+      if (!name) {
+        document.getElementById('name-error').style.display = 'block';
+        isValid = false;
+      }
+      
+      if (!email || !validateEmail(email)) {
+        document.getElementById('email-error').style.display = 'block';
+        isValid = false;
+      }
+      
+      if (!message) {
+        document.getElementById('message-error').style.display = 'block';
+        isValid = false;
+      }
+      
+      if (!isValid) return;
+      
+      // Show loading indicator
+      document.getElementById('loading').style.display = 'block';
+      
+      // Collect form data
+      const formData = new FormData(this);
+      
+      // Send form data to server
+      fetch('send_email.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        
+        if (data.success) {
+          // Show success message
+          document.getElementById('confirmationMessage').style.display = 'block';
+          // Reset form
+          this.reset();
+          // Hide success after 5 seconds
+          setTimeout(function() {
+            document.getElementById('confirmationMessage').style.display = 'none';
+          }, 5000);
+        } else {
+          // Show error message
+          document.getElementById('errorText').textContent = data.message || 'There was an error sending your message. Please try again.';
+          document.getElementById('errorMessage').style.display = 'block';
+        }
+      })
+      .catch(error => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errorText').textContent = 'Network error. Please check your connection and try again.';
+        document.getElementById('errorMessage').style.display = 'block';
+        console.error('Error:', error);
+      });
     });
+    
+    // Email validation function
+    function validateEmail(email) {
+      const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(email);
+    }
     
     // Smooth scrolling for navigation links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
