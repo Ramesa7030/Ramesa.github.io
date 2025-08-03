@@ -454,6 +454,7 @@
         <span>Ramesa Suppliers</span>
       </div>
       <nav>
+        <a href="#top" aria-label="Home">Home</a>
         <a href="#about">About</a>
         <a href="#services">Services</a>
         <a href="#industries">Industries</a>
@@ -462,8 +463,9 @@
     </div>
   </header>
 
+  <!-- Add id="top" to the hero section so Home scrolls there -->
   <!-- HERO -->
-  <section class="hero">
+  <section id="top" class="hero">
     <div class="container">
       <h1>Maximise Asset Performance, Minimise Downtime</h1>
       <p>30+ Years of Industrial Reliability Expertise</p>
@@ -491,7 +493,7 @@
         <div class="card">
           <i class="fas fa-certificate"></i>
           <h3>Certified Methodology</h3>
-          <p>Accredited RCM, Green Belt Practitioner, MOM Champion, and Workplace Assessor credentials.</p>
+          <p>Accredited RCM, Green Belt, and Workplace Assessor credentials.</p>
         </div>
         <div class="card">
           <i class="fas fa-database"></i>
@@ -742,12 +744,17 @@
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
         
-        document.querySelector(this.getAttribute('href')).scrollIntoView({
-          behavior: 'smooth'
-        });
+        const targetElement = document.querySelector(this.getAttribute('href'));
+        if(targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth'
+          });
+        } else {
+          // Scroll to top if #top or empty id
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       });
     });
   </script>
 </body>
 </html>
-
