@@ -543,8 +543,7 @@
       
       <div class="contact-form">
         <h3 style="color: var(--primary); margin-bottom: 20px;">Send Us a Message</h3>
-        <form id="contactForm" method="POST"
-      action="https://formspree.io/f/xyzpdbyj">
+        <form id="contactForm" action="https://formspree.io/f/xyzpdbyj" method="POST">
           <div class="form-group">
             <label for="name">Your Name</label>
             <input type="text" id="name" name="name" required>
@@ -648,33 +647,38 @@
       // Collect form data
       const formData = new FormData(this);
       
-      // Send form data to server
-      fetch('send_email.php', {
+      // Send form data to Formspree
+      fetch('https://formspree.io/f/xyzpdbyj', {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Form submission failed');
+        }
+      })
       .then(data => {
         document.getElementById('loading').style.display = 'none';
         
-        if (data.success) {
-          // Show success message
-          document.getElementById('confirmationMessage').style.display = 'block';
-          // Reset form
-          this.reset();
-          // Hide success after 5 seconds
-          setTimeout(function() {
-            document.getElementById('confirmationMessage').style.display = 'none';
-          }, 5000);
-        } else {
-          // Show error message
-          document.getElementById('errorText').textContent = data.message || 'There was an error sending your message. Please try again.';
-          document.getElementById('errorMessage').style.display = 'block';
-        }
+        // Show success message
+        document.getElementById('confirmationMessage').style.display = 'block';
+        
+        // Reset form
+        this.reset();
+        
+        // Hide success after 5 seconds
+        setTimeout(function() {
+          document.getElementById('confirmationMessage').style.display = 'none';
+        }, 5000);
       })
       .catch(error => {
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('errorText').textContent = 'Network error. Please check your connection and try again.';
+        document.getElementById('errorText').textContent = 'There was an error sending your message. Please try again.';
         document.getElementById('errorMessage').style.display = 'block';
         console.error('Error:', error);
       });
@@ -699,5 +703,3 @@
   </script>
 </body>
 </html>
-
-
